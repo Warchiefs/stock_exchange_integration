@@ -1,6 +1,7 @@
 <?php
 
 use Warchiefs\StockExchangeIntegration\Contracts\StockExchange as Exchange;
+use Illuminate\Support\Facades\Config;
 
 Route::prefix('exchange/api')->group(function () {
 	Route::any('/pairs', function(Exchange $exchange){
@@ -10,7 +11,7 @@ Route::prefix('exchange/api')->group(function () {
 		return $exchange->getInfoAboutPair(\Illuminate\Support\Facades\Request::get('pair'));
 	});
 	Route::any('/chart', function(Exchange $exchange){
-		switch (config('exchange.selected')) {
+		switch (Config::get('exchange.selected')) {
 			case 'kraken':
 				return $exchange->getJsonByPair(\Illuminate\Support\Facades\Request::get('pair'), \Illuminate\Support\Facades\Request::get('interval'), \Illuminate\Support\Facades\Request::get('since'));
 			case 'poloniex':
@@ -20,7 +21,7 @@ Route::prefix('exchange/api')->group(function () {
 		}
 	});
 	Route::any('/trades', function(Exchange $exchange){
-		switch (config('exchange.selected')) {
+		switch (Config::get('exchange.selected')) {
 			case 'kraken':
 				return $exchange->getTradeHistory(\Illuminate\Support\Facades\Request::get('pair'), \Illuminate\Support\Facades\Request::get('since'));
 			case 'poloniex':

@@ -3,6 +3,7 @@
 namespace Warchiefs\StockExchangeIntegration;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Config;
 
 class StockExchangeIntegrationProvider extends ServiceProvider
 {
@@ -27,7 +28,7 @@ class StockExchangeIntegrationProvider extends ServiceProvider
     {
 	    include __DIR__.'/routes.php';
 
-    	switch (config('exchange.seleсted')) {
+    	switch (Config::get('exchange.selected')) {
 		    case 'poloniex':
 		    	$exchange_path = 'Warchiefs\StockExchangeIntegration\Containers\Poloniex';
 		    	break;
