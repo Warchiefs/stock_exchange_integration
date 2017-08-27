@@ -7,7 +7,15 @@
             "email": "ialexmur@gmail.com"
         }
     ],
+    "require": {
+        "php" : ">=5.5.9",
+        "laravel/framework": "5.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Warchiefs\\StockExchangeIntegration\\" : "src/"
+        }
+    },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "require": {}
+    "prefer-stable": true
 }
