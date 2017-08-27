@@ -26,9 +26,8 @@ class StockExchangeIntegrationProvider extends ServiceProvider
     public function register()
     {
 	    include __DIR__.'/routes.php';
-	    $this->app->make('Warchiefs\StockExchangeIntegration\Controllers\StockExchangeApiController');
 
-    	switch (config('exchange.seleted')) {
+    	switch (config('exchange.seleсted')) {
 		    case 'poloniex':
 		    	$exchange_path = 'Warchiefs\StockExchangeIntegration\Containers\Poloniex';
 		    	break;
