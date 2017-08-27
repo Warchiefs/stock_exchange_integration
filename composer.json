@@ -1,0 +1,12 @@
+{
+    "name": "warchiefs/stock_exchange_integration",
+    "description": "Service for using stock exchange API",
+    "authors": [
+        {
+            "name": "Warchiefs",
+            "email": "ialexmur@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
