@@ -9,7 +9,8 @@ namespace Warchiefs\StockExchangeIntegration\Containers;
  *
  * @package Warchiefs\StockExchangeIntegration\Containers
  */
-class Poloniex extends StockExchange {
+class Poloniex extends StockExchange
+{
 
 	/**
 	 * Consts for second periods
@@ -47,12 +48,19 @@ class Poloniex extends StockExchange {
 	 * "totalBTC":"81.89657704",
 	 * "totalLTC":"78.52083806"}
 	 *
-	 * @return string
+	 * @return null|array
 	 */
 	public function getAvailableQuotation()
 	{
-		return $this->api_request('return24hVolume');
-	}
+        $responseJSON = $this->api_request('return24hVolume');
+        $response = json_decode($responseJSON, true);
+
+        if (!$response || !is_array($response) || isset($response['error'])) {
+            return null;
+        }
+
+        return $response;
+    }
 
 	/**
 	 * Returns the order book for a given market, as well as a sequence number
@@ -69,48 +77,76 @@ class Poloniex extends StockExchange {
 	 * @param string $second_currency
 	 * @param int    $depth
 	 *
-	 * @return string
+	 * @return null|array
 	 */
 	public function getInfoAboutPair($first_currency = 'BTC', $second_currency = 'NXT', $depth = 10)
 	{
-		return $this->api_request('returnOrderBook', [
-			'currencyPair'=> $first_currency.'_'.$second_currency,
+        $pair = $this->getPair($first_currency, $second_currency);
+
+        $responseJSON =  $this->api_request('returnOrderBook', [
+			'currencyPair'=> $pair,
 			'depth' => $depth
 		]);
+        $response = json_decode($responseJSON, true);
+
+        if (!$response || !is_array($response) || isset($response['error'])) {
+            return null;
+        }
+
+        return $response;
 	}
 
-	/**
-	 * Returns candlestick chart data.
-	 * Required GET parameters are "currencyPair", "period"
-	 * "start", and "end". "Start" and "end" are given in UNIX timestamp format
-	 * and used to specify the date range for the data returned.
-	 * Sample output:
-	 *
-	 * [{"date":1405699200,"high":0.0045388,"low":0.00403001,"open":0.00404545,"close":0.00427592,"volume":44.11655644,
-	 * "quoteVolume":10259.29079097,"weightedAverage":0.00430015}, ...]
-	 *
-	 *
-	 * @param string $first_currency
-	 * @param string $second_currency
-	 * @param int    $start
-	 * @param int    $end
-	 * @param int    $period
-	 *
-	 * @return string
-	 */
-	public function getJsonByPair($first_currency = 'BTC', $second_currency = 'NXT', $start = null, $end = 9999999999, $period = self::EVERY_FIVE_MINUTES)
+    /**
+     * Return chart data of currency pair
+     *
+     * data format: [[timestamp, high, low, open, close, advancedData]]
+     *
+     * @param string $first_currency
+     * @param string $second_currency
+     * @param null $start
+     * @param int $end
+     * @param int $period
+     * @return array|null
+     */
+    public function getChartData($first_currency = 'BTC', $second_currency = 'NXT', $start = null, $end = 9999999999, $period = self::EVERY_FIVE_MINUTES)
 	{
-		// If start == null, start => day ago
-		if(!$start) {
-			$start = time() - self::EVERY_DAY;
-		}
+        // If start == null, start => day ago
+        if(!$start) {
+            $start = time() - self::EVERY_DAY;
+        }
 
-		return $this->api_request('returnChartData', [
-			'currencyPair' => $first_currency.'_'.$second_currency,
-			'start' => $start,
-			'end' => $end,
-			'period' => $period
-		]);
+        $pair = $this->getPair($first_currency, $second_currency);
+
+        $responseJSON = $this->api_request('returnChartData', [
+            'currencyPair' => $pair,
+            'start' => $start,
+            'end' => $end,
+            'period' => $period
+        ]);
+        $response = json_decode($responseJSON, true);
+
+        if (!$response || !is_array($response) || isset($response['error'])) {
+            return null;
+        }
+
+        $returnData = [];
+
+        foreach ($response as $item) {
+            $currentData = [];
+            $currentData['timestamp'] = $item['date'];
+            $currentData['open'] = $item['open'];
+            $currentData['high'] = $item['high'];
+            $currentData['low'] = $item['low'];
+            $currentData['close'] = $item['close'];
+            $currentData['advancedData'] = [
+                'weightedAverage' => $item['weightedAverage'],
+                'volume' => $item['volume'],
+                'quoteVolume' => $item['quoteVolume'],
+            ];
+            $returnData[] = $currentData;
+        }
+
+        return $returnData;
 	}
 
 	/**
@@ -125,23 +161,91 @@ class Poloniex extends StockExchange {
 	 * @param null   $start
 	 * @param int   $end
 	 *
-	 * @return string
+	 * @return null|array
 	 */
 	public function getTradeHistory($first_currency = 'BTC', $second_currency = 'NXT', $start = null, $end = null)
 	{
+        $pair = $this->getPair($first_currency, $second_currency);
+
 		if(!$start && !$end) {
-			return $this->api_request('returnTradeHistory', [
-				'currencyPair' => $first_currency.'_'.$second_currency
+            $responseJSON =  $this->api_request('returnTradeHistory', [
+				'currencyPair' => $pair,
 			]);
 		} else {
-			return $this->api_request('returnTradeHistory', [
-				'currencyPair' => $first_currency.'_'.$second_currency,
+            $responseJSON = $this->api_request('returnTradeHistory', [
+				'currencyPair' => $pair,
 				'start' => $start,
 				'end' => $end
 			]);
 		}
 
+        $response = json_decode($responseJSON, true);
 
+        if (!$response || !is_array($response) || isset($response['error'])) {
+            return null;
+        }
+
+        return $response;
 	}
 
+    /**
+     * Return available coins
+     *
+     * @return array
+     */
+    public function getAvailableCoins()
+    {
+        $responseJSON = $this->api_request('returnCurrencies');
+        $response = json_decode($responseJSON, true);
+
+        if (!$response) {
+            return null;
+        }
+
+        $availableCoins = array_filter($response, function ($item) {
+            return !$item['disabled'] && !$item['delisted'];
+        });
+
+        return array_keys($availableCoins);
+    }
+
+    /**
+     * Return price of pair
+     *
+     * @param string $first_currency
+     * @param string $second_currency
+     * @return null|float
+     */
+    public function getPairPrice($first_currency = 'BTC', $second_currency = 'USD')
+    {
+        $pair = $this->getPair($first_currency, $second_currency);
+        $tickerJSON = $this->api_request('returnTicker');
+        $ticker = json_decode($tickerJSON, true);
+        if (!isset($ticker[$pair])) {
+            return null;
+        }
+
+        return (float) $ticker[$pair]['last'];
+    }
+
+    /**
+     * Return pair string
+     *
+     * change USD to USDT, becouse poloniex don't have USD
+     *
+     * @param $first_currency
+     * @param $second_currency
+     * @return string
+     */
+    private function getPair($first_currency, $second_currency)
+    {
+        if ($second_currency === 'USD') {
+            $second_currency .= 'T';
+            $pair = $second_currency . '_' . $first_currency;
+        } else {
+            $pair = $first_currency . '_' . $second_currency;
+        }
+
+        return $pair;
+    }
 }

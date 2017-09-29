@@ -3,15 +3,18 @@
 namespace Warchiefs\StockExchangeIntegration\Containers;
 
 use Warchiefs\StockExchangeIntegration\Contracts\StockExchange as Exchange;
+use GuzzleHttp\Client;
 
 /**
  * Parent class for StockExchange
  *
  * @package Warchiefs\StockExchangeIntegration\Containers
  */
-class StockExchange implements Exchange{
+abstract class StockExchange implements Exchange
+{
 
 	protected $api_uri;
+	protected $client;
 
 	/**
 	 * Counstruct an url for api request
@@ -37,35 +40,49 @@ class StockExchange implements Exchange{
 	 * @param       $method
 	 * @param array $params
 	 *
-	 * @return string
+	 * @return null|string
 	 */
 	public function api_request($method, array $params = [])
 	{
 		$uri = $this->uri_construct($method, $params);
+        $client = new Client();
+        $request = $client->request('GET', $uri, ['http_errors' => false]);
+        $response = $request->getBody()->getContents();
 
-		return file_get_contents($uri);
+		return $response;
 	}
 
-	// Functions for implements
+    /**
+     * Return avg of pair from all stock exchanges
+     *
+     * @param string $first_currency
+     * @param string $second_currency
+     * @return null|float
+     */
+    public static function getTickerAverage($first_currency = 'BTC', $second_currency = 'USD')
+    {
+        if (!($availableStocks = config('exchange.available'))) {
+            $config = require_once('../Config/exchange.php');
+            $availableStocks = $config['available'];
+        }
 
-	public function getAvailableQuotation()
-	{
-		//
-	}
+        $prices = [];
 
-	public function getTradeHistory($first_currency = 'BTC', $second_currency = 'USD', $start = null, $end = null)
-	{
-		//
-	}
+        foreach ($availableStocks as $stock) {
+            $class = __NAMESPACE__  . '\\' . ucfirst($stock);
+            if (!class_exists($class)) {
+                continue;
+            }
+            $stockExchange = new $class;
+            if ($price = $stockExchange->getPairPrice($first_currency, $second_currency)) {
+                $prices[$stock] = $price;
+            }
+        }
 
-	public function getJsonByPair($first_currency = 'BTC', $second_currency = 'USD')
-	{
-		//
-	}
+        if (count($prices) === 0) {
+            return null;
+        }
 
-	public function getInfoAboutPair($first_currency = 'BTC', $second_currency = 'USD')
-	{
-		//
-	}
-
+        return round(array_sum($prices) / count($prices), 8);
+    }
 }

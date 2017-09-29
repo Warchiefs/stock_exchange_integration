@@ -1,9 +1,8 @@
 <?php
 return [
-	/*
-	 * Selected stock exchange:
-	 * ['kraken', 'poloniex']
-	 */
-
-	'selected' => 'kraken'
+    /*available exchanges - ['kraken', 'poloniex', 'bithumb', 'bitfinex', 'bitflyer']*/
+    'available' => [
+        'kraken', 'poloniex', 'bithumb', 'bitfinex', 'bitflyer',
+    ],
+    'selected' => 'bitflyer',
 ];
