@@ -241,6 +241,8 @@ class Poloniex extends StockExchange
     {
         if ($second_currency === 'USD') {
             $second_currency .= 'T';
+        }
+        if ($second_currency === 'USDT') {
             $pair = $second_currency . '_' . $first_currency;
         } else {
             $pair = $first_currency . '_' . $second_currency;

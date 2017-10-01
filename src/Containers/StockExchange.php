@@ -16,6 +16,10 @@ abstract class StockExchange implements Exchange
 	protected $api_uri;
 	protected $client;
 
+    /*Currency return instead USD*/
+	protected $fiat = null;
+	protected $onlyFiat = false;
+
 	/**
 	 * Counstruct an url for api request
 	 *
@@ -53,13 +57,14 @@ abstract class StockExchange implements Exchange
 	}
 
     /**
-     * Return avg of pair from all stock exchanges
+     * Get array of prices
      *
      * @param string $first_currency
      * @param string $second_currency
-     * @return null|float
+     * @param null|callable $convertCallback
+     * @return array
      */
-    public static function getTickerAverage($first_currency = 'BTC', $second_currency = 'USD')
+    public static function getAllPrices($first_currency = 'BTC', $second_currency = 'USD', $convertCallback = null)
     {
         if (!($availableStocks = config('exchange.available'))) {
             $config = require_once('../Config/exchange.php');
@@ -74,15 +79,63 @@ abstract class StockExchange implements Exchange
                 continue;
             }
             $stockExchange = new $class;
-            if ($price = $stockExchange->getPairPrice($first_currency, $second_currency)) {
+
+            if ($stockExchange->isOnlyFiat() && $second_currency !== 'USD') {
+                continue;
+            }
+
+            $price = $stockExchange->getPairPrice($first_currency, $second_currency);
+            if ($second_currency === 'USD' && $fiatCurrency = $stockExchange->isFiat()) {
+                if ($convertCallback) {
+                    $price = $convertCallback($fiatCurrency, $price);
+                } else {
+                    continue;
+                }
+            }
+            if ($price) {
                 $prices[$stock] = $price;
             }
         }
+
+        return $prices;
+    }
+
+    /**
+     * Return avg of pair from all stock exchanges
+     *
+     * @param string $first_currency
+     * @param string $second_currency
+     * @param null|callable $convertCallback
+     * @return null|float
+     */
+    public static function getTickerAverage($first_currency = 'BTC', $second_currency = 'USD', $convertCallback = null)
+    {
+        $prices = self::getAllPrices($first_currency, $second_currency, $convertCallback);
 
         if (count($prices) === 0) {
             return null;
         }
 
         return round(array_sum($prices) / count($prices), 8);
+    }
+
+    /**
+     * If exchange change only fiat currency to cryptocurrency
+     *
+     * @return bool
+     */
+    public function isOnlyFiat()
+    {
+        return $this->onlyFiat;
+    }
+
+    /**
+     * If exchange don`t have dollars get fiat currency
+     *
+     * @return null|string
+     */
+    public function isFiat()
+    {
+        return $this->fiat;
     }
 }

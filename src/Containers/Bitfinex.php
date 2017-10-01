@@ -41,7 +41,7 @@ class Bitfinex extends StockExchange
      */
     public function getInfoAboutPair($first_currency = 'BTC', $second_currency = 'USD')
 	{
-	    $pair = strtolower($first_currency . $second_currency);
+        $pair = $this->getPair($first_currency . $second_currency);
 
         $responseJSON = $this->api_request('pubticker/' . $pair);
         $response = json_decode($responseJSON, true);
@@ -69,7 +69,7 @@ class Bitfinex extends StockExchange
      */
     public function getTradeHistory($first_currency = 'BTC', $second_currency = 'USD', $start = null, $limit = null)
 	{
-        $pair = strtolower($first_currency . $second_currency);
+        $pair = $this->getPair($first_currency, $second_currency);
 
         $params = [];
 
@@ -130,7 +130,7 @@ class Bitfinex extends StockExchange
      */
     public function getPairPrice($first_currency = 'BTC', $second_currency = 'USD')
     {
-        $pair = strtolower($first_currency . $second_currency);
+        $pair = $this->getPair($first_currency, $second_currency);
 
         $responseJSON = $this->api_request('pubticker/' . $pair);
         $response = json_decode($responseJSON, true);
@@ -140,5 +140,17 @@ class Bitfinex extends StockExchange
         }
 
         return (float) $response['last_price'];
+    }
+
+    private function getPair($first_currency = 'BTC', $second_currency = 'USD')
+    {
+        if ($first_currency === 'DASH') {
+            $first_currency = 'dsh';
+        }
+        if ($second_currency === 'DASH') {
+            $second_currency = 'dsh';
+        }
+
+        return strtolower($first_currency . $second_currency);
     }
 }

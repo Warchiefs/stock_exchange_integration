@@ -6,10 +6,6 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Config;
 use Warchiefs\StockExchangeIntegration\Containers\{
     Poloniex,
-    Kraken,
-    Bithumb,
-    Bitfinex,
-    Bitflyer,
     StockExchange
 };
 
@@ -34,26 +30,12 @@ class StockExchangeIntegrationProvider extends ServiceProvider
      */
     public function register()
     {
-    	switch (Config::get('exchange.selected')) {
-		    case 'poloniex':
-		    	$exchange_path = Poloniex::class;
-		    	break;
-		    case 'kraken':
-			    $exchange_path = Kraken::class;
-		    	break;
-            case 'bithumb':
-                $exchange_path = Bithumb::class;
-                break;
-            case 'bitfinex':
-                $exchange_path = Bitfinex::class;
-                break;
-            case 'bitflyer':
-                $exchange_path = Bitflyer::class;
-                break;
-		    default:
-			    $exchange_path = Poloniex::class;
-		    	break;
-	    }
+        $exchange = ucfirst(Config::get('exchange.selected'));
+        $exchange_path = __NAMESPACE__ . '\\Containers\\' . $exchange;
+
+        if (!class_exists($exchange_path)) {
+            $exchange_path = Poloniex::class;
+        }
 
 	    $this->app->bind(
             StockExchange::class,
