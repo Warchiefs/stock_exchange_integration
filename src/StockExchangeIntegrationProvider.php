@@ -3,11 +3,7 @@
 namespace Warchiefs\StockExchangeIntegration;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Config;
-use Warchiefs\StockExchangeIntegration\Containers\{
-    Poloniex,
-    StockExchange
-};
+use Warchiefs\StockExchangeIntegration\StockExchangeRegistry;
 
 class StockExchangeIntegrationProvider extends ServiceProvider
 {
@@ -21,6 +17,16 @@ class StockExchangeIntegrationProvider extends ServiceProvider
 	    $this->publishes([
 		    __DIR__.'/Config/exchange.php' => config_path('exchange.php'),
 	    ]);
+
+        foreach (config('exchange.available') as $exchange) {
+            $exchangeClassName = ucfirst($exchange);
+            $exchange_path = __NAMESPACE__ . '\\Containers\\' . $exchangeClassName;
+
+            if (class_exists($exchange_path)) {
+                $this->app->make(StockExchangeRegistry::class)
+                    ->register($exchange, new $exchange_path);
+            }
+        }
     }
 
     /**
@@ -30,21 +36,18 @@ class StockExchangeIntegrationProvider extends ServiceProvider
      */
     public function register()
     {
-        $exchange = ucfirst(Config::get('exchange.selected'));
-        $exchange_path = __NAMESPACE__ . '\\Containers\\' . $exchange;
+        $this->app->singleton(StockExchangeRegistry::class);
 
-        if (!class_exists($exchange_path)) {
-            $exchange_path = Poloniex::class;
-        }
 
-	    $this->app->bind(
-            StockExchange::class,
-		    $exchange_path
-	    );
 
-	    $this->app->bind(
-		    'StockExchange',
-		    $exchange_path
-	    );
+//	    $this->app->bind(
+//            StockExchange::class,
+//		    $exchange_path
+//	    );
+
+//	    $this->app->bind(
+//		    'StockExchange',
+//            StockExchangeRegistry::class
+//	    );
     }
 }
