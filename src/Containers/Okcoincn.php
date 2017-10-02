@@ -22,6 +22,13 @@ class Okcoincn extends Okcoin
      */
     protected function getPair($first_currency = 'BTC', $second_currency = 'CNY')
     {
+        if ($first_currency === 'BCH') {
+            $first_currency = 'BCC';
+        }
+        if ($second_currency === 'BCH') {
+            $second_currency = 'BCC';
+        }
+
         return strtolower($first_currency . '_CNY');
     }
 }
