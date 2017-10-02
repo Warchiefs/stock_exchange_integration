@@ -62,30 +62,27 @@ abstract class StockExchange implements Exchange
      * @param string $first_currency
      * @param string $second_currency
      * @param null|callable $convertCallback
+     * @param null|array $only - for return info only from this exchanges
      * @return array
      */
-    public static function getAllPrices($first_currency = 'BTC', $second_currency = 'USD', $convertCallback = null)
+    public static function getAllPrices($first_currency = 'BTC', $second_currency = 'USD', $convertCallback = null, $only = null)
     {
-        if (!($availableStocks = config('exchange.available'))) {
-            $config = require_once('../Config/exchange.php');
-            $availableStocks = $config['available'];
-        }
+        $containers = self::getExchangeContainers();
 
         $prices = [];
 
-        foreach ($availableStocks as $stock) {
-            $class = __NAMESPACE__  . '\\' . ucfirst($stock);
-            if (!class_exists($class)) {
+        foreach ($containers as $exchangeName => $container) {
+            if (is_array($only)) {
+                if (!in_array($exchangeName, $only)) {
+                    continue;
+                }
+            }
+            if ($container->isOnlyFiat() && $second_currency !== 'USD') {
                 continue;
             }
-            $stockExchange = new $class;
 
-            if ($stockExchange->isOnlyFiat() && $second_currency !== 'USD') {
-                continue;
-            }
-
-            $price = $stockExchange->getPairPrice($first_currency, $second_currency);
-            if ($second_currency === 'USD' && $fiatCurrency = $stockExchange->isFiat()) {
+            $price = $container->getPairPrice($first_currency, $second_currency);
+            if ($second_currency === 'USD' && $fiatCurrency = $container->isFiat()) {
                 if ($convertCallback) {
                     $price = $convertCallback($fiatCurrency, $price);
                 } else {
@@ -93,7 +90,7 @@ abstract class StockExchange implements Exchange
                 }
             }
             if ($price) {
-                $prices[$stock] = $price;
+                $prices[$exchangeName] = $price;
             }
         }
 
@@ -106,17 +103,67 @@ abstract class StockExchange implements Exchange
      * @param string $first_currency
      * @param string $second_currency
      * @param null|callable $convertCallback
+     * @param null|array $only
      * @return null|float
      */
-    public static function getTickerAverage($first_currency = 'BTC', $second_currency = 'USD', $convertCallback = null)
+    public static function getTickerAverage($first_currency = 'BTC', $second_currency = 'USD', $convertCallback = null, $only = null)
     {
-        $prices = self::getAllPrices($first_currency, $second_currency, $convertCallback);
+        $prices = self::getAllPrices($first_currency, $second_currency, $convertCallback, $only);
 
         if (count($prices) === 0) {
             return null;
         }
 
         return round(array_sum($prices) / count($prices), 8);
+    }
+
+    /**
+     * Get available coins on all exchanges
+     *
+     * @return array
+     */
+    public function getAllAvailableCoins()
+    {
+        $containers = $this->getExchangeContainers();
+
+        $coinsAll = [];
+
+        foreach ($containers as $container) {
+            if ($coins = $container->getAvailableCoins()) {
+                foreach ($coins as $coin) {
+                    if (!in_array($coin, $coinsAll)) {
+                        $coinsAll[] = $coin;
+                    }
+                }
+            }
+        }
+
+        return $coinsAll;
+    }
+
+    /**
+     * Get array of exchange containers
+     *
+     * @return array
+     */
+    protected static function getExchangeContainers()
+    {
+        if (!($availableStocks = config('exchange.available'))) {
+            $config = require_once('../Config/exchange.php');
+            $availableStocks = $config['available'];
+        }
+
+        $containers = [];
+
+        foreach ($availableStocks as $stock) {
+            $class = __NAMESPACE__  . '\\' . ucfirst($stock);
+            if (!class_exists($class)) {
+                continue;
+            }
+            $containers[$stock] = new $class;
+        }
+
+        return $containers;
     }
 
     /**
