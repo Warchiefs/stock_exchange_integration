@@ -11,9 +11,11 @@ namespace Warchiefs\StockExchangeIntegration\Containers;
  */
 class Bithumb extends StockExchange
 {
-
     public $api_uri = 'https://api.bithumb.com/public';
 
+    /*Currency return instead USD*/
+    protected $fiat = 'KRW';
+    protected $onlyFiat = true;
 
     public function getAvailableQuotation()
     {
@@ -61,9 +63,23 @@ class Bithumb extends StockExchange
         return array_keys($response);
     }
 
+    /**
+     * Get pair price
+     *
+     * @param string $first_currency
+     * @param string $second_currency
+     * @return float|null
+     */
     public function getPairPrice($first_currency = 'BTC', $second_currency = 'USD')
     {
-        return null;
+        $responseJSON = $this->api_request('ticker/' . $first_currency);
+        $response = json_decode($responseJSON, true);
+
+        if ($response['status'] !== "0000") {
+            return null;
+        }
+
+        return (float) $response['data']['sell_price'];
     }
 
     public function getChartData($first_currency = 'BTC', $second_currency = 'USD')

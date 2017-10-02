@@ -1,8 +1,21 @@
 <?php
 return [
-    /*available exchanges - ['kraken', 'poloniex', 'bithumb', 'bitfinex', 'bitflyer']*/
+    /*
+     * Available exchanges
+     * 'kraken', 'poloniex', 'bithumb',
+     * 'bitfinex', 'bitflyer' ,'okcoin',
+     * 'bitstamp', 'bittrex', 'gdax',
+     * 'gemini', 'hitbtc', 'korbit',
+     * 'coinone', 'binance', 'huobi'
+     * 'zaif', 'btc38', 'okcoincn'
+    */
     'available' => [
-        'kraken', 'poloniex', 'bithumb', 'bitfinex', 'bitflyer',
+        'kraken', 'poloniex', 'bithumb',
+        'bitfinex', 'bitflyer', 'okcoin',
+        'bitstamp', 'bittrex', 'gdax',
+        'gemini', 'hitbtc', 'korbit',
+        'coinone', 'binance', 'huobi',
+        'zaif', 'btc38', 'okcoincn'
     ],
-    'selected' => 'bitflyer',
+	'selected' => 'bithumb',
 ];
