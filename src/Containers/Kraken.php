@@ -52,7 +52,7 @@ class Kraken extends StockExchange
 	 */
 	public function getInfoAboutPair($first_currency = 'BCH', $second_currency = 'USD')
 	{
-        $responseJSON = $this->api_request('Ticker', ['pair' => $first_currency.$second_currency]);
+        $responseJSON = $this->api_request('Ticker', ['pair' => $this->getPair($first_currency, $second_currency),]);
         $response = json_decode($responseJSON, true);
 
         if (!$response || $response['error'] != []) {
@@ -79,12 +79,12 @@ class Kraken extends StockExchange
     {
         if(!$since) {
             $responseJSON = $this->api_request('OHLC', [
-                'pair' => $first_currency.$second_currency,
+                'pair' => $this->getPair($first_currency, $second_currency),
                 'interval' => $interval,
             ]);
         } else {
             $responseJSON = $this->api_request('OHLC', [
-                'pair' => $first_currency.$second_currency,
+                'pair' => $this->getPair($first_currency, $second_currency),
                 'interval' => $interval,
                 'since' => $since,
             ]);
@@ -135,11 +135,11 @@ class Kraken extends StockExchange
 	{
 		if(!$since) {
             $responseJSON = $this->api_request('Trades', [
-				'pair' => $first_currency.$second_currency
+				'pair' => $this->getPair($first_currency, $second_currency),
 			]);
 		} else {
             $responseJSON =  $this->api_request('Trades', [
-				'pair' => $first_currency.$second_currency,
+				'pair' => $this->getPair($first_currency, $second_currency),
 				'since' => $since
 			]);
 		}
@@ -179,7 +179,7 @@ class Kraken extends StockExchange
      */
     public function getPairPrice($first_currency = 'BCH', $second_currency = 'USD')
     {
-        $pair = $first_currency . $second_currency;
+        $pair = $this->getPair($first_currency, $second_currency);
 
         $tickerJSON = $this->api_request('Ticker', compact('pair'));
         $ticker = json_decode($tickerJSON, true);
@@ -191,5 +191,17 @@ class Kraken extends StockExchange
         foreach ($ticker['result'] as $item) {
             return (float) $item['c'][0];
         }
+    }
+
+    public function getPair($first_currency = 'BCH', $second_currency = 'USD')
+    {
+        if ($first_currency === 'BTC') {
+            $first_currency = 'XBT';
+        }
+        if ($second_currency === 'BTC') {
+            $second_currency = 'XBT';
+        }
+
+        return $first_currency . $second_currency;
     }
 }
