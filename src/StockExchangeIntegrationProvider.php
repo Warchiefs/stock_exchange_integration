@@ -37,17 +37,5 @@ class StockExchangeIntegrationProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(StockExchangeRegistry::class);
-
-
-
-//	    $this->app->bind(
-//            StockExchange::class,
-//		    $exchange_path
-//	    );
-
-//	    $this->app->bind(
-//		    'StockExchange',
-//            StockExchangeRegistry::class
-//	    );
     }
 }
