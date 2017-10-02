@@ -103,6 +103,13 @@ class Bittrex extends StockExchange
             $second_currency .= 'T';
         }
 
+        if ($first_currency === 'BCH') {
+            $first_currency = 'BCC';
+        }
+        if ($second_currency === 'BCH') {
+            $second_currency = 'BCC';
+        }
+
         return $second_currency . '-' . $first_currency;
     }
 }

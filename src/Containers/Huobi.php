@@ -85,6 +85,12 @@ class Huobi extends StockExchange
         if ($second_currency === 'USD') {
             $second_currency = 'CNY';
         }
+        if ($first_currency === 'BCH') {
+            $first_currency = 'BCC';
+        }
+        if ($second_currency === 'BCH') {
+            $second_currency = 'BCC';
+        }
         $this->api_uri = $second_currency !== 'CNY' ? $this->api_uri2 : $this->api_uri1;
 
         return strtolower($first_currency . $second_currency);
