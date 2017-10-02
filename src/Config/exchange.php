@@ -18,4 +18,5 @@ return [
         'zaif', 'btc38', 'okcoincn'
     ],
 	'selected' => 'bithumb',
+    'default' => 'poloniex',
 ];
